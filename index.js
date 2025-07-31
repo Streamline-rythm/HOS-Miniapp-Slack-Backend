@@ -167,7 +167,9 @@ async function sendingSlackReplyToFrontend(prop){
   const [[msg]] = await pool.query('SELECT user_id FROM messages WHERE id = ?', [messageId]);
   if (msg) {
     const userId = msg.user_id;
+    console.log("sending slack user ID=", userId);
     const socketId = onlineUsers.get(userId);
+    console.log("sending slack socket ID=", socketId);
     if (socketId) io.to(socketId).emit('reply', { messageId, content, replyAt });
     return true
   }
