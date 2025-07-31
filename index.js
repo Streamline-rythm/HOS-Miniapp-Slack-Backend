@@ -206,10 +206,10 @@ app.post('/slack/events', async (req, res) => {
     event.ts !== event.thread_ts
   ) {
     try {
-      const [messageId, tgId] = await getParentMessage(event.thread_ts);
-      if (!messageId || !tgId) return res.send({ status: 'error', reason: '❌ Parent message not found' });
+      const [parentCoreText, tgId] = await getParentMessage(event.thread_ts);
+      if (!parentCoreText || !tgId) return res.send({ status: 'error', reason: '❌ Parent message not found' });
 
-      const parentId = await getParentMessageId(messageId, tgId);
+      const parentId = await getParentMessageId(parentCoreText, tgId);
       if (!parentId) return res.send({ status: 'error', reason: '❌ Message ID not found' });
 
       const result = await saveSlackReply(parentId, event.text);
