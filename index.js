@@ -162,7 +162,8 @@ async function saveSlackReply(messageId, content) {
 app.post('/slack/events', async (req, res) => {
   if (!verifySlackRequest(req)) return res.status(403).send({ error: 'Invalid Slack signature' });
 
-  // const payload = JSON.parse(req.rawBody.toString());
+  const payload = req.body;
+  console.log("request body:", payload);
 
   // if (payload.type === 'url_verification') return res.send({ challenge: payload.challenge });
   // if (payload.type !== 'event_callback') return res.send({ status: 'ignored' });
