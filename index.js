@@ -8,6 +8,7 @@ import { Server } from 'socket.io';
 import crypto from 'crypto';
 
 import pool from './db.js';
+import { NONAME } from 'dns';
 
 dotenv.config();
 
@@ -158,12 +159,24 @@ async function saveSlackReply(messageId, content) {
   }
 }
 
+async function sendingSlackReplyToFrontend([messageId, content, replyAt]){
+  const [[msg]] = await pool.query('SELECT user_id FROM messages WHERE id = ?', [messageId]);
+  if (msg) {
+    const userId = msg.user_id;
+    const socketId = onlineUsers.get(userId);
+    if (socketId) io.to(socketId).emit('reply', { messageId, content, replyAt });
+    return true
+  }
+  
+  return false
+}
+
 // ✅ Slack Event Listener
 app.post('/slack/events', async (req, res) => {
   if (!verifySlackRequest(req)) return res.status(403).send({ error: 'Invalid Slack signature' });
 
   const payload = req.body;
-  console.log("request body:", payload);
+  // console.log("request body:", payload);
 
   if (payload.type === 'url_verification') return res.send({ challenge: payload.challenge });
   if (payload.type !== 'event_callback') return res.send({ status: 'ignored' });
@@ -179,15 +192,21 @@ app.post('/slack/events', async (req, res) => {
   ) {
     try {
       const parentMsg = await getParentMessage(event.thread_ts);
-      if (!parentMsg) return res.send({ status: 'error', reason: 'Parent message not found' });
+      if (!parentMsg) return res.send({ status: 'error', reason: '❌ Parent message not found' });
 
       const parentId = await getParentMessageId(parentMsg);
-      if (!parentId) return res.send({ status: 'error', reason: 'Message ID not found' });
+      if (!parentId) return res.send({ status: 'error', reason: '❌ Message ID not found' });
 
       const result = await saveSlackReply(parentId, event.text);
-      if (!result) return res.send({ status: 'error', reason: 'DB save failed' });
+      if (!result) return res.send({ status: 'error', reason: '❌ DB save failed' });
 
-      console.log('✅ Slack reply saved:', result);
+      // console.log('✅ Slack reply saved:', result);
+
+      const sendingResult = await sendingSlackReplyToFrontend(result);
+      if (!sendingResult) return res.send({ status: 'error', reason: '❌ Reply sending failed' });
+
+      console.log("✅ Success slack reply sending")
+
     } catch (err) {
       console.error('Slack handler error:', err.message);
     }
