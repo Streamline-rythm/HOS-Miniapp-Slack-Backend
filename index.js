@@ -159,7 +159,11 @@ async function saveSlackReply(messageId, content) {
   }
 }
 
-async function sendingSlackReplyToFrontend([messageId, content, replyAt]){
+async function sendingSlackReplyToFrontend(prop){
+  const messageId = prop["messageId"];
+  const content = prop["content"];
+  const replyAt = prop["replyAt"];
+
   const [[msg]] = await pool.query('SELECT user_id FROM messages WHERE id = ?', [messageId]);
   if (msg) {
     const userId = msg.user_id;
