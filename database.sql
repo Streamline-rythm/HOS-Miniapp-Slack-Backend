@@ -1,0 +1,14 @@
+CREATE TABLE messages (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id TEXT,
+  content TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE replies (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  message_id INT NOT NULL,
+  reply_content TEXT,
+  reply_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE
+);
