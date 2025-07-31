@@ -161,8 +161,8 @@ async function saveSlackReply(messageId, content) {
 
 async function sendingSlackReplyToFrontend(prop){
   const messageId = prop["messageId"];
-  const content = prop["content"];
-  const replyAt = prop["replyAt"];
+  const reply = prop["content"];
+  const currentTime = prop["replyAt"];
 
   const [[msg]] = await pool.query('SELECT user_id FROM messages WHERE id = ?', [messageId]);
   if (msg) {
@@ -170,7 +170,7 @@ async function sendingSlackReplyToFrontend(prop){
     console.log("sending slack user ID=", userId);
     const socketId = onlineUsers.get(userId);
     console.log("sending slack socket ID=", socketId);
-    if (socketId) io.to(socketId).emit('reply', { messageId, content, replyAt });
+    if (socketId) io.to(socketId).emit('reply', { messageId, reply, currentTime});
     return true
   }
   
