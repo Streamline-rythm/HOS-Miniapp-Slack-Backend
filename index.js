@@ -150,34 +150,34 @@ async function saveSlackReply(messageId, content) {
 
 // ✅ Slack Event Listener
 app.post('/slack/events', async (req, res) => {
-  if (req.body.type === 'url_verification') {
-    res.send(req.body.challenge);
-  }
-  // if (!verifySlackRequest(req)) return res.status(403).send({ error: 'Invalid Slack signature' });
-  // const payload = JSON.parse(req.body.toString());
-
-  // if (payload.type === 'url_verification') return res.send({ challenge: payload.challenge });
-  // if (payload.type !== 'event_callback') return res.send({ status: 'ignored' });
-
-  // const event = payload.event;
-  // if (event.type === 'message' && !event.subtype && event.channel === TARGET_CHANNEL && event.thread_ts && event.ts !== event.thread_ts) {
-  //   try {
-  //     const parentMsg = await getParentMessage(event.thread_ts);
-  //     if (!parentMsg) return res.send({ status: 'error', reason: 'Parent message not found' });
-
-  //     const parentId = await getParentMessageId(parentMsg);
-  //     if (!parentId) return res.send({ status: 'error', reason: 'Message ID not found' });
-
-  //     const result = await saveSlackReply(parentId, event.text);
-  //     if (!result) return res.send({ status: 'error', reason: 'DB save failed' });
-
-  //     console.log('✅ Slack reply saved:', result);
-  //   } catch (err) {
-  //     console.error('Slack handler error:', err.message);
-  //   }
+  // if (req.body.type === 'url_verification') {
+  //   res.send(req.body.challenge);
   // }
+  if (!verifySlackRequest(req)) return res.status(403).send({ error: 'Invalid Slack signature' });
+  const payload = JSON.parse(req.body.toString());
 
-  // return res.send({ status: 'ok' });
+  if (payload.type === 'url_verification') return res.send({ challenge: payload.challenge });
+  if (payload.type !== 'event_callback') return res.send({ status: 'ignored' });
+
+  const event = payload.event;
+  if (event.type === 'message' && !event.subtype && event.channel === TARGET_CHANNEL && event.thread_ts && event.ts !== event.thread_ts) {
+    try {
+      const parentMsg = await getParentMessage(event.thread_ts);
+      if (!parentMsg) return res.send({ status: 'error', reason: 'Parent message not found' });
+
+      const parentId = await getParentMessageId(parentMsg);
+      if (!parentId) return res.send({ status: 'error', reason: 'Message ID not found' });
+
+      const result = await saveSlackReply(parentId, event.text);
+      if (!result) return res.send({ status: 'error', reason: 'DB save failed' });
+
+      console.log('✅ Slack reply saved:', result);
+    } catch (err) {
+      console.error('Slack handler error:', err.message);
+    }
+  }
+
+  return res.send({ status: 'ok' });
 });
 
 // ✅ Socket.IO
