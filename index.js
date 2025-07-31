@@ -131,7 +131,13 @@ async function getParentMessage(thread_ts) {
     const messages = res.data.messages || [];
     if (!messages.length) return null;
     const parentText = messages[0].text;
-    return parentText.split('[').pop().replace(/[`[\]]/g, '').trim();
+    const match = parentText.match(/\(TGID \[([^\]]+)\]/);
+    const tgId = match ? match[1] : null;
+    const parentCoreText = parentText.split('[').pop().replace(/[`[\]]/g, '').trim();
+    return {
+      "parentCoreText" : parentCoreText,
+      "tgId": tgId
+    };
   } catch (err) {
     console.error('Slack API error:', err.message);
     return null;
@@ -139,8 +145,10 @@ async function getParentMessage(thread_ts) {
 }
 
 async function getParentMessageId(content) {
+  const parentCoreText = content.parentCoreText;
+  const tgId =content.tgId;
   try {
-    const [rows] = await pool.query('SELECT MAX(id) AS max_id FROM messages WHERE content = ?', [content]);
+    const [rows] = await pool.query( 'SELECT MAX(id) AS max_id FROM messages WHERE content = ? AND user_id = ?', [parentCoreText, tgId]);
     return rows[0]?.max_id || null;
   } catch (err) {
     console.error('DB lookup error:', err.message);
@@ -159,7 +167,7 @@ async function saveSlackReply(messageId, content) {
   }
 }
 
-async function sendingSlackReplyToFrontend(prop){
+async function sendingSlackReplyToFrontend(prop) {
   const messageId = prop["messageId"];
   const reply = prop["content"];
   const currentTime = prop["replyAt"];
@@ -170,10 +178,10 @@ async function sendingSlackReplyToFrontend(prop){
     console.log("sending slack user ID=", userId);
     const socketId = onlineUsers.get(userId);
     console.log("sending slack socket ID=", socketId);
-    if (socketId) io.to(socketId).emit('reply', { messageId, reply, currentTime});
+    if (socketId) io.to(socketId).emit('reply', { messageId, reply, currentTime });
     return true
   }
-  
+
   return false
 }
 
