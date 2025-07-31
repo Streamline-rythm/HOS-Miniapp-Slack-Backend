@@ -28,7 +28,11 @@ const TARGET_CHANNEL = 'C097MNT5HM5';
 const SLACK_REPLIES_API_URL = 'https://slack.com/api/conversations.replies';
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({
+  verify: (req, res, buf) => {
+    req.rawBody = buf; // Store raw body for signature verification
+  }
+}));
 
 // 📦 Utilities
 const asyncHandler = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(next);
@@ -95,21 +99,25 @@ app.post('/verify', asyncHandler(async (req, res) => {
   return res.status(200).json({ ok: true });
 }));
 
-// ✅ Slack Verification Helpers
-app.use('/slack/events', express.raw({ type: '*/*' }));
-
 function verifySlackRequest(req) {
   const timestamp = req.headers['x-slack-request-timestamp'];
   const slackSignature = req.headers['x-slack-signature'];
   if (!timestamp || !slackSignature) return false;
+
   const fiveMinutesAgo = Math.floor(Date.now() / 1000) - 60 * 5;
   if (parseInt(timestamp) < fiveMinutesAgo) return false;
 
-  const sigBase = `v0:${timestamp}:${req.body.toString()}`;
-  const hash = crypto.createHmac('sha256', SLACK_SIGNING_SECRET).update(sigBase).digest('hex');
-  const mySig = `v0=${hash}`;
-  return crypto.timingSafeEqual(Buffer.from(mySig), Buffer.from(slackSignature));
+  const sigBaseString = `v0:${timestamp}:${req.rawBody.toString()}`;
+  const hmac = crypto.createHmac('sha256', SLACK_SIGNING_SECRET);
+  const digest = 'v0=' + hmac.update(sigBaseString).digest('hex');
+
+  try {
+    return crypto.timingSafeEqual(Buffer.from(digest), Buffer.from(slackSignature));
+  } catch (e) {
+    return false;
+  }
 }
+
 
 async function getParentMessage(thread_ts) {
   try {
