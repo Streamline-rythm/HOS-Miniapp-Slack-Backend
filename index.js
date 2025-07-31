@@ -134,6 +134,9 @@ async function getParentMessage(thread_ts) {
     const match = parentText.match(/\(TGID \[([^\]]+)\]/);
     const tgId = match ? match[1] : null;
     const parentCoreText = parentText.split('[').pop().replace(/[`[\]]/g, '').trim();
+    console.log("parentCoreText =", parentCoreText);
+    console.log("tgId =", tgId);
+
     return {
       "parentCoreText" : parentCoreText,
       "tgId": tgId
@@ -144,9 +147,7 @@ async function getParentMessage(thread_ts) {
   }
 }
 
-async function getParentMessageId(content) {
-  const parentCoreText = content.parentCoreText;
-  const tgId =content.tgId;
+async function getParentMessageId(parentCoreText, tgId) {
   try {
     const [rows] = await pool.query( 'SELECT MAX(id) AS max_id FROM messages WHERE content = ? AND user_id = ?', [parentCoreText, tgId]);
     return rows[0]?.max_id || null;
@@ -205,10 +206,10 @@ app.post('/slack/events', async (req, res) => {
     event.ts !== event.thread_ts
   ) {
     try {
-      const parentMsg = await getParentMessage(event.thread_ts);
-      if (!parentMsg) return res.send({ status: 'error', reason: '❌ Parent message not found' });
+      const [messageId, tgId] = await getParentMessage(event.thread_ts);
+      if (!messageId || !tgId) return res.send({ status: 'error', reason: '❌ Parent message not found' });
 
-      const parentId = await getParentMessageId(parentMsg);
+      const parentId = await getParentMessageId(messageId, tgId);
       if (!parentId) return res.send({ status: 'error', reason: '❌ Message ID not found' });
 
       const result = await saveSlackReply(parentId, event.text);
