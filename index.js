@@ -132,7 +132,7 @@ async function getParentMessage(thread_ts) {
     if (!messages.length) return null;
     const parentText = messages[0].text;
     const match = parentText.match(/\(TGID \[([^\]]+)\]/);
-    const tgId = match ? match[1] : null;
+    const tgId = match ? match[1].replace("`", "").trim() : null;
     const parentCoreText = parentText.split('[').pop().replace(/[`[\]]/g, '').trim();
     console.log("parentCoreText =", parentCoreText);
     console.log("tgId =", tgId);
