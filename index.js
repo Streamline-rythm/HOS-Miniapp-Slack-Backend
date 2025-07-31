@@ -150,6 +150,7 @@ async function getParentMessage(thread_ts) {
 async function getParentMessageId(parentCoreText, tgId) {
   try {
     const [rows] = await pool.query( 'SELECT MAX(id) AS max_id FROM messages WHERE content = ? AND user_id = ?', [parentCoreText, tgId]);
+    console.log("parent Id = ", rows[0]?.max_id);
     return rows[0]?.max_id || null;
   } catch (err) {
     console.error('DB lookup error:', err.message);
