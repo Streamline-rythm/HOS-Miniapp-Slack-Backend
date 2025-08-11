@@ -68,7 +68,7 @@ npm run dev
 ---
 
 ## 📜 Database table query
-```sh
+```sql
 CREATE TABLE messages (
   id INT AUTO_INCREMENT PRIMARY KEY,
   user_id TEXT,
