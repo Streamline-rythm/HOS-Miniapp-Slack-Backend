@@ -74,7 +74,7 @@ app.post('/webhook/reply', asyncHandler(async (req, res) => {
 // ✅ Fetch user messages
 app.get('/messages', asyncHandler(async (req, res) => {
   const userId = req.query.userId;
-  const limit = parseInt(req.query.limit) || 20;
+  const limit = parseInt(req.query.limit) || 5;
   const offset = parseInt(req.query.offset) || 0;
   if (!userId) return res.status(400).json({ error: 'userId required' });
 
