@@ -22,7 +22,8 @@ const io = new Server(server, {
 });
 
 const onlineUsers = new Map();
-const EXTERNAL_WEBHOOK_URL = 'https://hook.us2.make.com/dofk0pewchek787h49faugkr5ql7otnu';
+// const EXTERNAL_WEBHOOK_URL = 'https://hook.us2.make.com/dofk0pewchek787h49faugkr5ql7otnu';
+const EXTERNAL_WEBHOOK_URL = 'https://agylogistics.app.n8n.cloud/webhook/d32b2898-8508-4ab8-8a0e-325c84d3f33e';
 const SLACK_SIGNING_SECRET = process.env.SLACK_SIGNING_SECRET;
 const SLACK_BOT_TOKEN = process.env.SLACK_BOT_TOKEN;
 const TARGET_CHANNEL = 'C097MNT5HM5';
